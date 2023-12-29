@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monte Carlo Simulation</title>
+  <title>Monte Carlo Profit Simulation</title>
   <style>
     #simulation-container {
       position: relative;
-      width: 300px;
+      width: 600px;
       height: 300px;
       border: 1px solid #000;
+      margin-bottom: 20px;
     }
 
     .point {
@@ -20,51 +21,80 @@
       border-radius: 50%;
     }
 
-    #pi-value {
-      margin-top: 10px;
+    #profit-stats {
       font-size: 18px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Monte Carlo Simulation for π</h1>
+  <h1>Monte Carlo Profit Simulation</h1>
 
   <div id="simulation-container"></div>
 
-  <p id="pi-value">Estimated Value of π: <span id="pi">-</span></p>
+  <div id="profit-stats">
+    <p>Mean Profit: <span id="mean-profit">-</span></p>
+    <p>Standard Deviation of Profit: <span id="std-dev-profit">-</span></p>
+  </div>
 
   <script>
     const simulationContainer = document.getElementById('simulation-container');
-    const piValueElement = document.getElementById('pi');
+    const meanProfitElement = document.getElementById('mean-profit');
+    const stdDevProfitElement = document.getElementById('std-dev-profit');
 
-    let totalPoints = 0;
-    let pointsInsideCircle = 0;
+    let totalSimulations = 0;
+    let totalProfit = 0;
+    let totalProfitSquared = 0;
 
-    function updatePiValue() {
-      const piEstimation = (4 * pointsInsideCircle) / totalPoints;
-      piValueElement.textContent = piEstimation.toFixed(5);
+    function updateProfitStats() {
+      const meanProfit = totalProfit / totalSimulations;
+      const stdDevProfit = Math.sqrt(totalProfitSquared / totalSimulations - meanProfit ** 2);
+
+      meanProfitElement.textContent = meanProfit.toFixed(2);
+      stdDevProfitElement.textContent = stdDevProfit.toFixed(2);
     }
 
     function performMonteCarloSimulation() {
-      const x = Math.random();
-      const y = Math.random();
-      const distance = Math.sqrt(x * x + y * y);
+      const demand = gaussianRandom(1000, 300);
+      const unitRevenue = uniformRandom(100, 150);
+      const unitCost = triangularRandom(80, 90, 170);
+
+      const quantitySold = Math.min(demand, Math.floor(Math.random() * demand) + 1);
+      const revenue = quantitySold * unitRevenue;
+      const cost = quantitySold * unitCost;
+      const profit = revenue - cost;
+
+      totalSimulations++;
+      totalProfit += profit;
+      totalProfitSquared += profit ** 2;
 
       const pointElement = document.createElement('div');
       pointElement.className = 'point';
-      pointElement.style.left = `${x * 100}%`;
-      pointElement.style.top = `${y * 100}%`;
+      pointElement.style.left = `${(quantitySold / 2000) * 100}%`;
+      pointElement.style.top = `${((profit + 500) / 1000) * 100}%`;
 
       simulationContainer.appendChild(pointElement);
 
-      totalPoints++;
+      updateProfitStats();
+    }
 
-      if (distance <= 1) {
-        pointsInsideCircle++;
-      }
+    function gaussianRandom(mean, stdDev) {
+      let u = 0;
+      let v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return mean + stdDev * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
 
-      updatePiValue();
+    function uniformRandom(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function triangularRandom(min, mode, max) {
+      const u = Math.random();
+      return u < (mode - min) / (max - min)
+        ? min + Math.sqrt(u * (max - min) * (mode - min))
+        : max - Math.sqrt((1 - u) * (max - min) * (max - mode));
     }
 
     setInterval(performMonteCarloSimulation, 10);
