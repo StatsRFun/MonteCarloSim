@@ -18,6 +18,26 @@
       font-size: 18px;
       margin-top: 20px;
     }
+
+    #profit-histogram {
+      width: 600px;
+      height: 200px;
+      border: 1px solid #000;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    #profit-bars {
+      display: flex;
+      position: relative;
+      height: 100%;
+    }
+
+    .bar {
+      flex: 1;
+      background-color: #999;
+      margin: 0 1px;
+    }
   </style>
 </head>
 <body>
@@ -39,6 +59,10 @@
     <p>Max Profit: <span id="summary-max-profit">-</span></p>
   </div>
 
+  <div id="profit-histogram">
+    <div id="profit-bars"></div>
+  </div>
+
   <script>
     const simulationCounterElement = document.getElementById('current-simulation');
     const meanProfitElement = document.getElementById('mean-profit');
@@ -47,6 +71,7 @@
     const summaryStdDevElement = document.getElementById('summary-std-dev');
     const summaryMinProfitElement = document.getElementById('summary-min-profit');
     const summaryMaxProfitElement = document.getElementById('summary-max-profit');
+    const profitBars = document.getElementById('profit-bars');
 
     let currentSimulation = 0;
     let totalProfit = 0;
@@ -73,6 +98,28 @@
       summaryMaxProfitElement.textContent = summaryMaxProfit.toFixed(2);
     }
 
+    function updateHistogramChart() {
+      const binCount = 20;
+      const binWidth = (Math.max(...profitData) - Math.min(...profitData)) / binCount;
+      const bins = Array.from({ length: binCount }, (_, i) => i * binWidth + Math.min(...profitData));
+
+      const binCounts = Array(binCount).fill(0);
+
+      profitData.forEach(profit => {
+        const binIndex = Math.floor((profit - Math.min(...profitData)) / binWidth);
+        binCounts[binIndex]++;
+      });
+
+      profitBars.innerHTML = '';
+      bins.forEach((bin, index) => {
+        const barHeight = (binCounts[index] / currentSimulation) * 100 + '%';
+        const barElement = document.createElement('div');
+        barElement.className = 'bar';
+        barElement.style.height = barHeight;
+        profitBars.appendChild(barElement);
+      });
+    }
+
     function performMonteCarloSimulation() {
       if (currentSimulation >= 1000) {
         clearInterval(simulationInterval);
@@ -96,6 +143,7 @@
 
       simulationCounterElement.textContent = currentSimulation;
       updateProfitStats();
+      updateHistogramChart();
     }
 
     function gaussianRandom(mean, stdDev) {
