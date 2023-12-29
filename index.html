@@ -20,8 +20,8 @@
     }
 
     #profit-histogram {
-      width: 600px;
-      height: 200px;
+      width: 800px;
+      height: 300px;
       border: 1px solid #000;
       overflow: hidden;
       margin-top: 20px;
@@ -36,7 +36,7 @@
 
     .bar {
       flex: 1;
-      background-color: #999;
+      background-color: #3498db; /* Blue color */
       margin: 0 1px;
     }
 
@@ -68,7 +68,7 @@
     <input type="number" id="x-axis-min" value="-100">
     <label for="x-axis-max">X-Axis Max:</label>
     <input type="number" id="x-axis-max" value="100">
-    <button onclick="setXAxisRange()">Set Range</button>
+    <button onclick="startSimulation()">Set Range</button>
   </div>
 
   <div id="simulation-counter">Simulation: <span id="current-simulation">0</span>/1000</div>
@@ -93,21 +93,29 @@
   </div>
 
   <script>
-    const xAxisMinInput = document.getElementById('x-axis-min');
-    const xAxisMaxInput = document.getElementById('x-axis-max');
-    const simulationCounterElement = document.getElementById('current-simulation');
-    const meanProfitElement = document.getElementById('mean-profit');
-    const stdDevProfitElement = document.getElementById('std-dev-profit');
-    const summaryMeanProfitElement = document.getElementById('summary-mean-profit');
-    const summaryStdDevElement = document.getElementById('summary-std-dev');
-    const summaryMinProfitElement = document.getElementById('summary-min-profit');
-    const summaryMaxProfitElement = document.getElementById('summary-max-profit');
-    const profitBars = document.getElementById('profit-bars');
+    let xAxisMinInput = document.getElementById('x-axis-min');
+    let xAxisMaxInput = document.getElementById('x-axis-max');
+    let simulationCounterElement = document.getElementById('current-simulation');
+    let meanProfitElement = document.getElementById('mean-profit');
+    let stdDevProfitElement = document.getElementById('std-dev-profit');
+    let summaryMeanProfitElement = document.getElementById('summary-mean-profit');
+    let summaryStdDevElement = document.getElementById('summary-std-dev');
+    let summaryMinProfitElement = document.getElementById('summary-min-profit');
+    let summaryMaxProfitElement = document.getElementById('summary-max-profit');
+    let profitBars = document.getElementById('profit-bars');
 
     let currentSimulation = 0;
     let totalProfit = 0;
     let totalProfitSquared = 0;
-    const profitData = [];
+    let profitData = [];
+    let isSimulationRunning = false;
+
+    function startSimulation() {
+      if (!isSimulationRunning) {
+        isSimulationRunning = true;
+        simulateMonteCarlo();
+      }
+    }
 
     function setXAxisRange() {
       const xAxisMin = parseInt(xAxisMinInput.value);
@@ -124,6 +132,9 @@
         label.textContent = bin.toFixed(0);
         xAxisLabels.appendChild(label);
       });
+
+      // Update histogram chart
+      updateHistogramChart();
     }
 
     function updateProfitStats() {
@@ -170,30 +181,33 @@
       });
     }
 
-    function performMonteCarloSimulation() {
-      if (currentSimulation >= 1000) {
-        clearInterval(simulationInterval);
-        updateSummaryStats();
-        return;
-      }
+    function simulateMonteCarlo() {
+      const simulationInterval = setInterval(() => {
+        if (currentSimulation >= 1000) {
+          clearInterval(simulationInterval);
+          isSimulationRunning = false;
+          updateSummaryStats();
+          return;
+        }
 
-      const demand = gaussianRandom(1000, 300);
-      const unitRevenue = uniformRandom(100, 150);
-      const unitCost = triangularRandom(80, 90, 170);
+        const demand = gaussianRandom(1000, 300);
+        const unitRevenue = uniformRandom(100, 150);
+        const unitCost = triangularRandom(80, 90, 170);
 
-      const quantitySold = Math.min(demand, Math.floor(Math.random() * demand) + 1);
-      const revenue = quantitySold * unitRevenue;
-      const cost = quantitySold * unitCost;
-      const profit = revenue - cost;
+        const quantitySold = Math.min(demand, Math.floor(Math.random() * demand) + 1);
+        const revenue = quantitySold * unitRevenue;
+        const cost = quantitySold * unitCost;
+        const profit = revenue - cost;
 
-      currentSimulation++;
-      totalProfit += profit;
-      totalProfitSquared += profit ** 2;
-      profitData.push(profit);
+        currentSimulation++;
+        totalProfit += profit;
+        totalProfitSquared += profit ** 2;
+        profitData.push(profit);
 
-      simulationCounterElement.textContent = currentSimulation;
-      updateProfitStats();
-      updateHistogramChart();
+        simulationCounterElement.textContent = currentSimulation;
+        updateProfitStats();
+        updateHistogramChart();
+      }, 0);
     }
 
     function gaussianRandom(mean, stdDev) {
@@ -214,8 +228,6 @@
         ? min + Math.sqrt(u * (max - min) * (mode - min))
         : max - Math.sqrt((1 - u) * (max - min) * (max - mode));
     }
-
-    const simulationInterval = setInterval(performMonteCarloSimulation, 0);
   </script>
 
 </body>
