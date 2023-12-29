@@ -15,14 +15,29 @@
 
     .point {
       position: absolute;
-      width: 2px;
-      height: 2px;
+      width: 5px;
+      height: 5px;
       background-color: #000;
       border-radius: 50%;
     }
 
-    #profit-stats {
-      font-size: 18px;
+    #profit-histogram {
+      width: 600px;
+      height: 200px;
+      border: 1px solid #000;
+      overflow: hidden;
+    }
+
+    #profit-bars {
+      display: flex;
+      position: relative;
+      height: 100%;
+    }
+
+    .bar {
+      flex: 1;
+      background-color: #999;
+      margin: 0 1px;
     }
   </style>
 </head>
@@ -32,29 +47,51 @@
 
   <div id="simulation-container"></div>
 
-  <div id="profit-stats">
-    <p>Mean Profit: <span id="mean-profit">-</span></p>
-    <p>Standard Deviation of Profit: <span id="std-dev-profit">-</span></p>
+  <div id="profit-histogram">
+    <div id="profit-bars"></div>
   </div>
 
   <script>
     const simulationContainer = document.getElementById('simulation-container');
-    const meanProfitElement = document.getElementById('mean-profit');
-    const stdDevProfitElement = document.getElementById('std-dev-profit');
+    const profitHistogram = document.getElementById('profit-histogram');
+    const profitBars = document.getElementById('profit-bars');
 
     let totalSimulations = 0;
     let totalProfit = 0;
     let totalProfitSquared = 0;
+    const profitData = [];
 
     function updateProfitStats() {
       const meanProfit = totalProfit / totalSimulations;
       const stdDevProfit = Math.sqrt(totalProfitSquared / totalSimulations - meanProfit ** 2);
 
-      meanProfitElement.textContent = meanProfit.toFixed(2);
-      stdDevProfitElement.textContent = stdDevProfit.toFixed(2);
+      const binCount = 20;
+      const binWidth = (2 * stdDevProfit) / binCount;
+      const bins = Array.from({ length: binCount }, (_, i) => i * binWidth + meanProfit - stdDevProfit);
+
+      const binCounts = Array(binCount).fill(0);
+
+      profitData.forEach(profit => {
+        const binIndex = Math.floor((profit - (meanProfit - stdDevProfit)) / binWidth);
+        binCounts[binIndex]++;
+      });
+
+      profitBars.innerHTML = '';
+      bins.forEach((bin, index) => {
+        const barHeight = (binCounts[index] / totalSimulations) * 100 + '%';
+        const barElement = document.createElement('div');
+        barElement.className = 'bar';
+        barElement.style.height = barHeight;
+        profitBars.appendChild(barElement);
+      });
     }
 
     function performMonteCarloSimulation() {
+      if (totalSimulations >= 1000) {
+        clearInterval(simulationInterval);
+        return;
+      }
+
       const demand = gaussianRandom(1000, 300);
       const unitRevenue = uniformRandom(100, 150);
       const unitCost = triangularRandom(80, 90, 170);
@@ -67,6 +104,7 @@
       totalSimulations++;
       totalProfit += profit;
       totalProfitSquared += profit ** 2;
+      profitData.push(profit);
 
       const pointElement = document.createElement('div');
       pointElement.className = 'point';
@@ -97,7 +135,7 @@
         : max - Math.sqrt((1 - u) * (max - min) * (max - mode));
     }
 
-    setInterval(performMonteCarloSimulation, 10);
+    const simulationInterval = setInterval(performMonteCarloSimulation, 10);
   </script>
 
 </body>
