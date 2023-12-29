@@ -5,39 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monte Carlo Profit Simulation</title>
   <style>
-    #simulation-container {
-      position: relative;
-      width: 600px;
-      height: 300px;
-      border: 1px solid #000;
-      margin-bottom: 20px;
+    #simulation-counter {
+      font-size: 18px;
+      margin-bottom: 10px;
     }
 
-    .point {
-      position: absolute;
-      width: 5px;
-      height: 5px;
-      background-color: #000;
-      border-radius: 50%;
+    #profit-stats {
+      font-size: 18px;
     }
 
-    #profit-histogram {
-      width: 600px;
-      height: 200px;
-      border: 1px solid #000;
-      overflow: hidden;
-    }
-
-    #profit-bars {
-      display: flex;
-      position: relative;
-      height: 100%;
-    }
-
-    .bar {
-      flex: 1;
-      background-color: #999;
-      margin: 0 1px;
+    #summary-stats {
+      font-size: 18px;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -45,50 +24,59 @@
 
   <h1>Monte Carlo Profit Simulation</h1>
 
-  <div id="simulation-container"></div>
+  <div id="simulation-counter">Simulation: <span id="current-simulation">0</span>/1000</div>
 
-  <div id="profit-histogram">
-    <div id="profit-bars"></div>
+  <div id="profit-stats">
+    <p>Mean Profit: <span id="mean-profit">-</span></p>
+    <p>Standard Deviation of Profit: <span id="std-dev-profit">-</span></p>
+  </div>
+
+  <div id="summary-stats">
+    <p>Simulation Summary:</p>
+    <p>Mean Profit: <span id="summary-mean-profit">-</span></p>
+    <p>Standard Deviation: <span id="summary-std-dev">-</span></p>
+    <p>Min Profit: <span id="summary-min-profit">-</span></p>
+    <p>Max Profit: <span id="summary-max-profit">-</span></p>
   </div>
 
   <script>
-    const simulationContainer = document.getElementById('simulation-container');
-    const profitHistogram = document.getElementById('profit-histogram');
-    const profitBars = document.getElementById('profit-bars');
+    const simulationCounterElement = document.getElementById('current-simulation');
+    const meanProfitElement = document.getElementById('mean-profit');
+    const stdDevProfitElement = document.getElementById('std-dev-profit');
+    const summaryMeanProfitElement = document.getElementById('summary-mean-profit');
+    const summaryStdDevElement = document.getElementById('summary-std-dev');
+    const summaryMinProfitElement = document.getElementById('summary-min-profit');
+    const summaryMaxProfitElement = document.getElementById('summary-max-profit');
 
-    let totalSimulations = 0;
+    let currentSimulation = 0;
     let totalProfit = 0;
     let totalProfitSquared = 0;
     const profitData = [];
 
     function updateProfitStats() {
-      const meanProfit = totalProfit / totalSimulations;
-      const stdDevProfit = Math.sqrt(totalProfitSquared / totalSimulations - meanProfit ** 2);
+      const meanProfit = totalProfit / currentSimulation;
+      const stdDevProfit = Math.sqrt(totalProfitSquared / currentSimulation - meanProfit ** 2);
 
-      const binCount = 20;
-      const binWidth = (2 * stdDevProfit) / binCount;
-      const bins = Array.from({ length: binCount }, (_, i) => i * binWidth + meanProfit - stdDevProfit);
+      meanProfitElement.textContent = meanProfit.toFixed(2);
+      stdDevProfitElement.textContent = stdDevProfit.toFixed(2);
+    }
 
-      const binCounts = Array(binCount).fill(0);
+    function updateSummaryStats() {
+      const summaryMeanProfit = totalProfit / currentSimulation;
+      const summaryStdDevProfit = Math.sqrt(totalProfitSquared / currentSimulation - summaryMeanProfit ** 2);
+      const summaryMinProfit = Math.min(...profitData);
+      const summaryMaxProfit = Math.max(...profitData);
 
-      profitData.forEach(profit => {
-        const binIndex = Math.floor((profit - (meanProfit - stdDevProfit)) / binWidth);
-        binCounts[binIndex]++;
-      });
-
-      profitBars.innerHTML = '';
-      bins.forEach((bin, index) => {
-        const barHeight = (binCounts[index] / totalSimulations) * 100 + '%';
-        const barElement = document.createElement('div');
-        barElement.className = 'bar';
-        barElement.style.height = barHeight;
-        profitBars.appendChild(barElement);
-      });
+      summaryMeanProfitElement.textContent = summaryMeanProfit.toFixed(2);
+      summaryStdDevElement.textContent = summaryStdDevProfit.toFixed(2);
+      summaryMinProfitElement.textContent = summaryMinProfit.toFixed(2);
+      summaryMaxProfitElement.textContent = summaryMaxProfit.toFixed(2);
     }
 
     function performMonteCarloSimulation() {
-      if (totalSimulations >= 1000) {
+      if (currentSimulation >= 1000) {
         clearInterval(simulationInterval);
+        updateSummaryStats();
         return;
       }
 
@@ -101,18 +89,12 @@
       const cost = quantitySold * unitCost;
       const profit = revenue - cost;
 
-      totalSimulations++;
+      currentSimulation++;
       totalProfit += profit;
       totalProfitSquared += profit ** 2;
       profitData.push(profit);
 
-      const pointElement = document.createElement('div');
-      pointElement.className = 'point';
-      pointElement.style.left = `${(quantitySold / 2000) * 100}%`;
-      pointElement.style.top = `${((profit + 500) / 1000) * 100}%`;
-
-      simulationContainer.appendChild(pointElement);
-
+      simulationCounterElement.textContent = currentSimulation;
       updateProfitStats();
     }
 
@@ -135,7 +117,7 @@
         : max - Math.sqrt((1 - u) * (max - min) * (max - mode));
     }
 
-    const simulationInterval = setInterval(performMonteCarloSimulation, 10);
+    const simulationInterval = setInterval(performMonteCarloSimulation, 0);
   </script>
 
 </body>
