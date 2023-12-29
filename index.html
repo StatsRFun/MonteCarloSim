@@ -40,28 +40,36 @@
       margin: 0 1px;
     }
 
-    #x-axis-labels {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-      transform: rotate(180deg);
-    }
-
-    #y-axis-label {
-      transform: rotate(180deg);
-      margin-right: 20px;
-    }
-
     #chart-container {
       display: flex;
       flex-direction: column;
       align-items: center;
+    }
+
+    #x-axis-form {
+      margin-top: 20px;
+    }
+
+    label {
+      margin-right: 10px;
+    }
+
+    input {
+      width: 60px;
     }
   </style>
 </head>
 <body>
 
   <h1>Monte Carlo Profit Simulation</h1>
+
+  <div id="x-axis-form">
+    <label for="x-axis-min">X-Axis Min:</label>
+    <input type="number" id="x-axis-min" value="-100">
+    <label for="x-axis-max">X-Axis Max:</label>
+    <input type="number" id="x-axis-max" value="100">
+    <button onclick="setXAxisRange()">Set Range</button>
+  </div>
 
   <div id="simulation-counter">Simulation: <span id="current-simulation">0</span>/1000</div>
 
@@ -82,10 +90,11 @@
     <div id="profit-histogram">
       <div id="profit-bars"></div>
     </div>
-
-    
+  </div>
 
   <script>
+    const xAxisMinInput = document.getElementById('x-axis-min');
+    const xAxisMaxInput = document.getElementById('x-axis-max');
     const simulationCounterElement = document.getElementById('current-simulation');
     const meanProfitElement = document.getElementById('mean-profit');
     const stdDevProfitElement = document.getElementById('std-dev-profit');
@@ -99,6 +108,23 @@
     let totalProfit = 0;
     let totalProfitSquared = 0;
     const profitData = [];
+
+    function setXAxisRange() {
+      const xAxisMin = parseInt(xAxisMinInput.value);
+      const xAxisMax = parseInt(xAxisMaxInput.value);
+      const binCount = 20;
+      const binWidth = (xAxisMax - xAxisMin) / binCount;
+      const bins = Array.from({ length: binCount }, (_, i) => i * binWidth + xAxisMin);
+
+      // Update x-axis labels
+      const xAxisLabels = document.getElementById('x-axis-labels');
+      xAxisLabels.innerHTML = '';
+      bins.forEach(bin => {
+        const label = document.createElement('span');
+        label.textContent = bin.toFixed(0);
+        xAxisLabels.appendChild(label);
+      });
+    }
 
     function updateProfitStats() {
       const meanProfit = totalProfit / currentSimulation;
@@ -121,14 +147,16 @@
     }
 
     function updateHistogramChart() {
+      const xAxisMin = parseInt(xAxisMinInput.value);
+      const xAxisMax = parseInt(xAxisMaxInput.value);
       const binCount = 20;
-      const binWidth = (Math.max(...profitData) - Math.min(...profitData)) / binCount;
-      const bins = Array.from({ length: binCount }, (_, i) => i * binWidth + Math.min(...profitData));
+      const binWidth = (xAxisMax - xAxisMin) / binCount;
+      const bins = Array.from({ length: binCount }, (_, i) => i * binWidth + xAxisMin);
 
       const binCounts = Array(binCount).fill(0);
 
       profitData.forEach(profit => {
-        const binIndex = Math.floor((profit - Math.min(...profitData)) / binWidth);
+        const binIndex = Math.floor((profit - xAxisMin) / binWidth);
         binCounts[binIndex]++;
       });
 
