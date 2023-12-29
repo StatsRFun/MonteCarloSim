@@ -25,6 +25,7 @@
       border: 1px solid #000;
       overflow: hidden;
       margin-top: 20px;
+      transform: rotate(180deg);
     }
 
     #profit-bars {
@@ -37,6 +38,24 @@
       flex: 1;
       background-color: #999;
       margin: 0 1px;
+    }
+
+    #x-axis-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      transform: rotate(180deg);
+    }
+
+    #y-axis-label {
+      transform: rotate(180deg);
+      margin-right: 20px;
+    }
+
+    #chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
   </style>
 </head>
@@ -59,8 +78,20 @@
     <p>Max Profit: <span id="summary-max-profit">-</span></p>
   </div>
 
-  <div id="profit-histogram">
-    <div id="profit-bars"></div>
+  <div id="chart-container">
+    <div id="profit-histogram">
+      <div id="profit-bars"></div>
+    </div>
+
+    <div id="x-axis-labels">
+      <span>-Max Profit</span>
+      <span>-Min Profit</span>
+      <span>Mean Profit</span>
+      <span>+Min Profit</span>
+      <span>+Max Profit</span>
+    </div>
+
+    <div id="y-axis-label">Frequency</div>
   </div>
 
   <script>
