@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monte Carlo Simulation</title>
+  <style>
+    #simulation-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border: 1px solid #000;
+    }
+
+    .point {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background-color: #000;
+      border-radius: 50%;
+    }
+
+    #pi-value {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Monte Carlo Simulation for π</h1>
+
+  <div id="simulation-container"></div>
+
+  <p id="pi-value">Estimated Value of π: <span id="pi">-</span></p>
+
+  <script>
+    const simulationContainer = document.getElementById('simulation-container');
+    const piValueElement = document.getElementById('pi');
+
+    let totalPoints = 0;
+    let pointsInsideCircle = 0;
+
+    function updatePiValue() {
+      const piEstimation = (4 * pointsInsideCircle) / totalPoints;
+      piValueElement.textContent = piEstimation.toFixed(5);
+    }
+
+    function performMonteCarloSimulation() {
+      const x = Math.random();
+      const y = Math.random();
+      const distance = Math.sqrt(x * x + y * y);
+
+      const pointElement = document.createElement('div');
+      pointElement.className = 'point';
+      pointElement.style.left = `${x * 100}%`;
+      pointElement.style.top = `${y * 100}%`;
+
+      simulationContainer.appendChild(pointElement);
+
+      totalPoints++;
+
+      if (distance <= 1) {
+        pointsInsideCircle++;
+      }
+
+      updatePiValue();
+    }
+
+    setInterval(performMonteCarloSimulation, 10);
+  </script>
+
+</body>
+</html>
